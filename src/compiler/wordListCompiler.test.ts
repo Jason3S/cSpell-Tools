@@ -1,10 +1,10 @@
 // cSpell:ignore jpegs outing dirs lcode
 // cSpell:enableCompoundWords
 
-
 import { expect } from 'chai';
-import { lineToWords, compileWordList, compileTrie } from './wordListCompiler';
-import { normalizeWords, normalizeWordsToTrie } from './wordListCompiler';
+import { compileWordList, compileTrie } from './wordListCompiler';
+import { normalizeWordsToTrie } from './wordListCompiler';
+import { normalizeEntries } from './normalization';
 import * as fsp from 'fs-extra';
 import * as Trie from 'cspell-trie';
 import * as path from 'path';
@@ -12,49 +12,10 @@ import { from } from 'rxjs';
 import { take, toArray } from 'rxjs/operators';
 
 describe('Validate the wordListCompiler', function() {
-    it('tests splitting lines', () => {
-        const line = 'AppendIterator::getArrayIterator';
-        expect(lineToWords(line).filter(distinct()).toArray()).to.deep.equal([
-            'append',
-            'iterator',
-            'get',
-            'array',
-        ]);
-        expect(lineToWords('Austin Martin').toArray()).to.deep.equal([
-            'austin martin', 'austin', 'martin'
-        ]);
-        expect(lineToWords('JPEGsBLOBs').filter(distinct()).toArray()).to.deep.equal(['jpegs', 'blobs']);
-        expect(lineToWords('CURLs CURLing').filter(distinct()).toArray()).to.deep.equal(['curls curling', 'curls', 'curling']);
-        expect(lineToWords('DNSTable Lookup').filter(distinct()).toArray()).to.deep.equal(['dns', 'table', 'lookup']);
-        expect(lineToWords('OUTRing').filter(distinct()).toArray()).to.deep.equal(['outring']);
-        expect(lineToWords('OUTRings').filter(distinct()).toArray()).to.deep.equal(['outrings']);
-        expect(lineToWords('DIRs').filter(distinct()).toArray()).to.deep.equal(['dirs']);
-        expect(lineToWords('AVGAspect').filter(distinct()).toArray()).to.deep.equal(['avg', 'aspect']);
-        expect(lineToWords('New York').filter(distinct()).toArray()).to.deep.equal(['new york', 'new', 'york']);
-        expect(lineToWords('Namespace DNSLookup').filter(distinct()).toArray()).to.deep.equal(['namespace', 'dns', 'lookup']);
-        expect(lineToWords('well-educated').filter(distinct()).toArray()).to.deep.equal(['well', 'educated']);
-        // Sadly we cannot do this one correctly
-        expect(lineToWords('CURLcode').filter(distinct()).toArray()).to.deep.equal(['cur', 'lcode']);
-        expect(lineToWords('kDNSServiceErr_BadSig').filter(distinct()).toArray()).to.deep.equal([
-            'k',
-            'dns',
-            'service',
-            'err',
-            'bad',
-            'sig',
-        ]);
-        expect(lineToWords('apd_get_active_symbols').filter(distinct()).toArray()).to.deep.equal([
-            'apd',
-            'get',
-            'active',
-            'symbols',
-        ]);
-    });
-
     it('test reading and normalizing a file', () => {
         const sourceName = path.join(__dirname, '..', '..', 'Samples', 'cities.txt');
         const destName = path.join(__dirname, '..', '..', 'temp', 'cities.txt');
-        return compileWordList(sourceName, destName, { splitWords: true })
+        return compileWordList(sourceName, destName)
         .then(() => fsp.readFile(destName, 'utf8'))
         .then(output => {
             expect(output).to.be.equal(citiesResult);
@@ -64,16 +25,16 @@ describe('Validate the wordListCompiler', function() {
     it('test compiling to a file without split', () => {
         const sourceName = path.join(__dirname, '..', '..', 'Samples', 'cities.txt');
         const destName = path.join(__dirname, '..', '..', 'temp', 'cities2.txt');
-        return compileWordList(sourceName, destName, { splitWords: false })
+        return compileWordList(sourceName, destName)
         .then(() => fsp.readFile(destName, 'utf8'))
         .then(output => {
-            expect(output).to.be.equal(cities.toLowerCase());
+            expect(output).to.be.equal(cities);
         });
     });
 
     it('tests normalized to a trie', () => {
         const words = citiesResult.split('\n');
-        const nWords = normalizeWords(from(words)).pipe(toArray()).toPromise();
+        const nWords = normalizeEntries(from(words)).pipe(toArray()).toPromise();
         const tWords = normalizeWordsToTrie(from(words))
             .then(node => Trie.iteratorTrieWords(node))
             .then(seq => [...seq]);
@@ -99,11 +60,6 @@ describe('Validate the wordListCompiler', function() {
     });
 });
 
-function distinct(): (word: string) => boolean {
-    const known = new Set<String>();
-    return a => known.has(a) ? false : (known.add(a), true);
-}
-
 const cities = `\
 New York
 New Amsterdam
@@ -116,6 +72,7 @@ Paris
 `;
 
 const citiesResult = `\
+New York
 new york
 new
 york
