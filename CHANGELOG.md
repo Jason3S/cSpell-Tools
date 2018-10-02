@@ -1,5 +1,8 @@
 # Release Notes
 
+## 4.0
+*  Preserve whole words, including camel case words. This is to support case sensitive checks and accent checks.
+
 ## 2.0
 * Update to rxjs 6
 ## 1.4.1

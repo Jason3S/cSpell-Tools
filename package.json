@@ -1,6 +1,6 @@
 {
   "name": "cspell-tools",
-  "version": "3.0.4",
+  "version": "4.0.0",
   "description": "Tools to assist with the development of cSpell",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -57,7 +57,7 @@
   "dependencies": {
     "commander": "^2.18.0",
     "cspell-lib": "^3.0.4",
-    "cspell-trie": "^3.0.6",
+    "cspell-trie": "^3.0.7",
     "fs-extra": "^7.0.0",
     "gensequence": "^2.1.1",
     "glob": "^7.1.3",
