@@ -18,7 +18,7 @@ describe('Validate the wordListCompiler', function() {
         return compileWordList(sourceName, destName)
         .then(() => fsp.readFile(destName, 'utf8'))
         .then(output => {
-            expect(output).to.be.equal(citiesResult);
+            expect(output).to.be.equal(cities);
         });
     });
 
@@ -34,7 +34,7 @@ describe('Validate the wordListCompiler', function() {
 
     it('tests normalized to a trie', () => {
         const words = citiesResult.split('\n');
-        const nWords = normalizeEntries(from(words)).pipe(toArray()).toPromise();
+        const nWords = normalizeEntries(from(words), false, false).pipe(toArray()).toPromise();
         const tWords = normalizeWordsToTrie(from(words))
             .then(node => Trie.iteratorTrieWords(node))
             .then(seq => [...seq]);
@@ -54,7 +54,7 @@ describe('Validate the wordListCompiler', function() {
             return Trie.importTrieRx(from(words)).pipe(take(1)).toPromise()
             .then(node => {
                 expect([...Trie.iteratorTrieWords(node)].sort()).to.be.deep
-                    .equal(citiesResult.split('\n').filter(a => !!a).sort());
+                    .equal(cities.split('\n').filter(a => !!a).sort());
             });
         });
     });
@@ -69,6 +69,9 @@ New Delhi
 Mexico City
 London
 Paris
+São Paulo
+Algés
+Caneças
 `;
 
 const citiesResult = `\

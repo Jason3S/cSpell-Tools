@@ -36,9 +36,9 @@ describe('Validate the wordListCompiler', function() {
     });
 
     it('normalizeEntries', () => {
-        return normalizeEntries(from(sampleList)).pipe(toArray()).toPromise().then(a => {
+        return normalizeEntries(from(sampleList), true, true).pipe(toArray()).toPromise().then(a => {
             expect(a).to.be.deep.equal(
-                'cafe,Café,Cafe#,café^,cafe^#,APCUIterator,apcuiterator^,rewind,valid,__construct,apcu_add,apcu_cache_info,apcu_cas'.split(',')
+                'cafe,Café,~Cafe,^café,~^cafe,APCUIterator,^apcuiterator,rewind,valid,__construct,apcu_add,apcu_cache_info,apcu_cas'.split(',')
             );
         });
     });
