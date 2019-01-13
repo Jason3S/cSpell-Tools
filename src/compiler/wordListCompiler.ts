@@ -1,17 +1,27 @@
-import { lineReaderRx } from './fileReader';
 import { writeToFileRxP} from 'cspell-lib';
 import { Observable, zip, from } from 'rxjs';
-import { flatMap, reduce, map, bufferCount, filter, distinct } from 'rxjs/operators';
+import { reduce, map, bufferCount, take, concatMap, tap } from 'rxjs/operators';
 import * as path from 'path';
 import { mkdirp } from 'fs-extra';
 import * as Trie from 'cspell-trie';
-import * as HR from 'hunspell-reader';
 import { normalizeEntries } from './normalization';
+import { streamWordsFromFile } from './rxStreams';
 
-export function compileWordList(filename: string, destFilename: string): Promise<void> {
+export interface CompileOptions {
+    normalizeCase: boolean;
+    normalizeAccents: boolean;
+    limit?: number;
+}
+
+export function compileWordList(filename: string, destFilename: string, options: CompileOptions): Promise<void> {
     const destDir = path.dirname(destFilename);
-
-    return mkdirp(destDir).then(() => writeToFileRxP(destFilename, normalizeEntries(streamWordsFromFile(filename), false, false).pipe(
+    const entries = normalizeEntries(
+        streamWordsFromFile(filename),
+        options.normalizeCase,
+        options.normalizeAccents
+    );
+    const finalEntries = (options.limit ? entries.pipe(take(options.limit)) : entries);
+    return mkdirp(destDir).then(() => writeToFileRxP(destFilename, finalEntries.pipe(
         map(a => a + '\n'),
         bufferCount(1024),
         map(a => a.join('')),
@@ -31,31 +41,12 @@ export function compileWordListToTrieFile(words: Observable<string>, destFilenam
 
     const data = zip(pDir, root, (_: void, b: Trie.TrieNode) => b).pipe(
         map(node => Trie.serializeTrie(node, { base: 16, comment: 'Built by cspell-tools.' })),
-        flatMap(seq => from(seq)),
+        concatMap(seq => from(seq)),
     );
 
     return writeToFileRxP(destFilename, data.pipe(bufferCount(1024), map(a => a.join(''))));
 }
 
-const regHunspellFile = /\.(dic|aff)$/i;
-
-function readHunspellFiles(filename: string): Observable<string> {
-    const dicFile = filename.replace(regHunspellFile, '.dic');
-    const affFile = filename.replace(regHunspellFile, '.aff');
-
-    const reader = HR.HunspellReader.createFromFiles(affFile, dicFile);
-
-    const r = from(reader).pipe(
-        flatMap(reader => reader.readWordsRx()),
-        map(aff => aff.word),
-    );
-    return r;
-}
-
 export function compileTrie(filename: string, destFilename: string): Promise<void> {
     return compileWordListToTrieFile(streamWordsFromFile(filename), destFilename);
-}
-
-function streamWordsFromFile(filename: string): Observable<string> {
-    return regHunspellFile.test(filename) ? readHunspellFiles(filename) : lineReaderRx(filename);
 }

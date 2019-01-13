@@ -12,10 +12,12 @@ import { from } from 'rxjs';
 import { take, toArray } from 'rxjs/operators';
 
 describe('Validate the wordListCompiler', function() {
+    const optionNoNormalize = { normalizeAccents: false, normalizeCase: false };
+
     it('test reading and normalizing a file', () => {
         const sourceName = path.join(__dirname, '..', '..', 'Samples', 'cities.txt');
         const destName = path.join(__dirname, '..', '..', 'temp', 'cities.txt');
-        return compileWordList(sourceName, destName)
+        return compileWordList(sourceName, destName, optionNoNormalize)
         .then(() => fsp.readFile(destName, 'utf8'))
         .then(output => {
             expect(output).to.be.equal(cities);
@@ -25,7 +27,7 @@ describe('Validate the wordListCompiler', function() {
     it('test compiling to a file without split', () => {
         const sourceName = path.join(__dirname, '..', '..', 'Samples', 'cities.txt');
         const destName = path.join(__dirname, '..', '..', 'temp', 'cities2.txt');
-        return compileWordList(sourceName, destName)
+        return compileWordList(sourceName, destName, optionNoNormalize)
         .then(() => fsp.readFile(destName, 'utf8'))
         .then(output => {
             expect(output).to.be.equal(cities);

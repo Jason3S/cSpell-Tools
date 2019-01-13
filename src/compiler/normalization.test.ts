@@ -10,7 +10,7 @@ const een = 'één';
 const eenD = een.normalize('NFD');
 const cafe = 'café'.normalize('NFD');
 
-describe('Validate the wordListCompiler', function() {
+describe('Normalization', function() {
     it('tests splitting lines', () => {
         const line = 'AppendIterator::getArrayIterator';
         expect(lineToWords(line).filter(distinct())).to.deep.equal([

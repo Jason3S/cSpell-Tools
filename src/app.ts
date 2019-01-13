@@ -33,6 +33,11 @@ program
 
         const ext = '.txt' + (options.compress ? '.gz' : '');
 
+        const compileOptions = {
+            normalizeCase: false,
+            normalizeAccents: false,
+        };
+
         from(src).pipe(
             flatMap(src => globRx(src)),
             flatMap(s => s),
@@ -43,7 +48,7 @@ program
             }),
             concatMap(([src, dst]) => {
                 console.log('Process "%s" to "%s"', src, dst);
-                return compileWordList(src, dst, ).then(() => src);
+                return compileWordList(src, dst, compileOptions).then(() => src);
             }),
         )
         .forEach(name => console.log(`Complete.`));
